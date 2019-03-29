@@ -21,18 +21,22 @@ public abstract class AbstractLock implements Lock {
      * 资源key
      */
     protected String key;
+
     /**
      * 资源类型
      */
     protected SourceTypeEnum type;
+
     /**
      * 默认锁住时间（10s）
      */
     protected int defaultLockTimeOut = 10000;
+
     /**
      * 获取锁最大超时时间（毫秒，默认30s）
      */
     protected long maxTryLockTimeOut = 30000;
+
     /**
      * 每次尝试获取锁的时间间隔（毫秒）
      */

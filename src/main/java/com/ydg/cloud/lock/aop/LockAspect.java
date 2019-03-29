@@ -43,18 +43,17 @@ public class LockAspect {
     @Autowired
     private ApplicationContext context;
 
-    @Around("@annotation(anno)")
-    public Object lock(ProceedingJoinPoint joinPoint, Lock anno) throws Throwable {
-
+    @Around("@annotation(annotation)")
+    public Object lock(ProceedingJoinPoint joinPoint, Lock annotation) throws Throwable {
         //获取key
-        String keyName = anno.keyName();
+        String keyName = annotation.keyName();
         String key = getKey(joinPoint, keyName);
         //锁实现
-        LockLevelEnum type = anno.type();
+        LockLevelEnum type = annotation.type();
         //资源类型
-        SourceTypeEnum sourceType = anno.lockTypeEnum();
+        SourceTypeEnum sourceType = annotation.lockTypeEnum();
 
-        AbstractLock lock = (AbstractLock) context.getBean(type.getClz());
+        AbstractLock lock = context.getBean(type.getClz());
         lock.setKey(key);
         lock.setType(sourceType);
         //设置等待超时（10s）

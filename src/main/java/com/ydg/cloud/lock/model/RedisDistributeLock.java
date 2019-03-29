@@ -30,22 +30,27 @@ public class RedisDistributeLock extends AbstractLock {
      */
     @Autowired
     private JedisPool jedisPool;
+
     /**
      * 操作成功返回值
      */
     private final static String OK = "OK";
+
     /**
      * 不存在则创建
      */
     private static final String SET_IF_NOT_EXIST = "NX";
+
     /**
      * 创建key的同时设置它的过期时间
      */
     private static final String SET_WITH_EXPIRE_TIME = "PX";
+
     /**
      * 每次生成获取锁的同时，记录请求id（防止分布式，key被其他服务器删除）
      */
     private String requestId;
+
     /**
      * 资源key
      */
@@ -131,7 +136,9 @@ public class RedisDistributeLock extends AbstractLock {
             return false;
         } finally {
             //返还到连接池
-            jedis.close();
+            if (jedis != null) {
+                jedis.close();
+            }
         }
     }
 

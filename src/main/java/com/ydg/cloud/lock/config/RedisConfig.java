@@ -27,6 +27,7 @@ public class RedisConfig {
      * redis-cli config set notify-keyspace-events Egx
      * 如果你的Redis不是你自己维护的，比如你是使用阿里云的Redis数据库，你不能够更改它的配置，那么可以使用如下方法：在applicationContext.xml中配置
      * <util:constant static-field="org.springframework.session.data.redis.config.ConfigureRedisAction.NO_OP"/>
+     *
      * @return
      */
     /*@Bean
@@ -55,7 +56,6 @@ public class RedisConfig {
         log.info("开始创建redis连接池：" + redisHost + ":" + redisPort);
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
         jedisPoolConfig.setMaxWaitMillis(redisTimeout);
-
         if (StringUtils.isEmpty(redisPassword)) {
             return new JedisPool(jedisPoolConfig, redisHost, redisPort, redisTimeout);
         }

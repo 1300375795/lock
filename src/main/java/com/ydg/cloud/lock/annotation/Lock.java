@@ -38,6 +38,6 @@ public @interface Lock {
      *
      * @return
      */
-    SourceTypeEnum lockTypeEnum() default SourceTypeEnum.customize;
+    SourceTypeEnum lockTypeEnum() default SourceTypeEnum.CUSTOMIZE;
 
 }

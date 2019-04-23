@@ -58,7 +58,7 @@ public class RedisDistributeLock extends AbstractLock {
 
     @Override
     public void lock() {
-        boolean result = lock(maxTryLockTimeOut);
+        boolean result = this.lock(maxTryLockTimeOut);
         Assert.isTrue(result, new LockException("try lock timeout, key: " + getLockKey()));
     }
 
@@ -85,16 +85,19 @@ public class RedisDistributeLock extends AbstractLock {
         if (StringUtils.isBlank(key)) {
             throw new LockException("key must not blank");
         }
-        unlock(getLockKey());
+        this.unlock(this.getLockKey());
     }
 
     private boolean lock(long tryLockTimeOut) {
         long start = System.currentTimeMillis();
         requestId = UUID.randomUUID().toString();
         boolean result = false;
+        String lockKey = getLockKey();
+        //如果花费时间小于获取锁最大超时时间,并且没有获取锁成功,不断进行获取锁操作
         while ((System.currentTimeMillis() - start) < tryLockTimeOut && !result) {
-            log.info("try lock, current key: " + getLockKey());
-            result = lock(getLockKey(), defaultLockTimeOut);
+            log.info("try lock, current key: " + lockKey);
+            result = this.lock(lockKey, defaultLockTimeOut);
+            //如果获取失败,那么就进行休眠,等待重新获取锁
             if (!result) {
                 try {
                     Thread.sleep(tryLockInterval);
@@ -124,9 +127,8 @@ public class RedisDistributeLock extends AbstractLock {
      * @return 返回成功还是失败
      */
     private boolean lock(String lockKey, int expireTime) {
-        Jedis jedis = null;
-        try {
-            jedis = jedisPool.getResource();
+        try (Jedis jedis = jedisPool.getResource()) {
+            //redis锁最核心的就是下面的这个操作
             String result = jedis.set(lockKey, requestId, SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, expireTime);
             if (OK.equals(result)) {
                 log.info("lock success, current key: {}, requestId: {}, expireTime: {} ms", lockKey, requestId,
@@ -134,11 +136,6 @@ public class RedisDistributeLock extends AbstractLock {
                 return true;
             }
             return false;
-        } finally {
-            //返还到连接池
-            if (jedis != null) {
-                jedis.close();
-            }
         }
     }
 
@@ -149,9 +146,7 @@ public class RedisDistributeLock extends AbstractLock {
      * @return 返回成功还是失败
      */
     private boolean unlock(String key) {
-        Jedis jedis = null;
-        try {
-            jedis = jedisPool.getResource();
+        try (Jedis jedis = jedisPool.getResource()) {
             String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
             Object result = jedis.eval(script, Collections.singletonList(key), Collections.singletonList(requestId));
 
@@ -161,9 +156,6 @@ public class RedisDistributeLock extends AbstractLock {
             }
             log.info("release lock success, current key: {}, requestId: {}", getLockKey(), requestId);
             return false;
-        } finally {
-            //返还到连接池
-            jedis.close();
         }
     }
 

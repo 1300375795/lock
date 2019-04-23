@@ -47,7 +47,7 @@ public class LockAspect {
     public Object lock(ProceedingJoinPoint joinPoint, Lock annotation) throws Throwable {
         //获取key
         String keyName = annotation.keyName();
-        String key = getKey(joinPoint, keyName);
+        String key = this.getKey(joinPoint, keyName);
         //锁实现
         LockLevelEnum type = annotation.type();
         //资源类型
@@ -90,10 +90,13 @@ public class LockAspect {
         //获取参数所在索引
         int index = -1;
         int pointIndex = keyName.indexOf(POINT);
+        //基于POINT判断需要被lock的属性是一个对象的某个属性类型还是就是一个基础类型
         String matchName = pointIndex == -1 ? keyName : keyName.substring(0, pointIndex);
+        //基于得到的属性名称跟给出的参数名称进行名称对比,如果匹配到了拿到这个index
         for (int i = 0; i < parameterNames.length; i++) {
             if (matchName.equals(parameterNames[i])) {
                 index = i;
+                break;
             }
         }
         Assert.isTrue(index != -1, new LockException("annotation Lock keyName can not match methodParameter"));

@@ -28,6 +28,9 @@ public @interface Lock {
 
     /**
      * key名称，从方法入参中获取指定的key（支持复杂类型）
+     * 用法:
+     * 如果你要以xxDTO的id作为key进行锁定资源,那么就是如下写法
+     * keyName = "xxDTO.id"
      *
      * @return
      */

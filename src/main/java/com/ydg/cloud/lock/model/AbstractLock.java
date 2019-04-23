@@ -43,7 +43,7 @@ public abstract class AbstractLock implements Lock {
     protected long tryLockInterval = 100;
 
     /**
-     * 直接获取锁（一直等待，知道抛出异常or获取锁），阻塞
+     * 直接获取锁（一直等待，直到抛出异常or获取锁），阻塞
      */
     @Override
     public abstract void lock();

@@ -4,6 +4,7 @@ import com.ydg.cloud.lock.enums.SourceTypeEnum;
 import com.ydg.cloud.lock.exception.LockException;
 import com.ydg.cloud.lock.utils.Assert;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +33,14 @@ public class RedisDistributeLock extends AbstractLock {
     private JedisPool jedisPool;
 
     /**
-     * 操作成功返回值
+     * 加锁操作成功标识
      */
-    private final static String OK = "OK";
+    private final static String LOCK_SUCCESS = "OK";
+
+    /**
+     * 释放锁成功的标识
+     */
+    private final static String UNLOCK_SUCCESS = "1";
 
     /**
      * 不存在则创建
@@ -130,7 +136,7 @@ public class RedisDistributeLock extends AbstractLock {
         try (Jedis jedis = jedisPool.getResource()) {
             //redis锁最核心的就是下面的这个操作
             String result = jedis.set(lockKey, requestId, SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, expireTime);
-            if (OK.equals(result)) {
+            if (LOCK_SUCCESS.equals(result)) {
                 log.info("lock success, current key: {}, requestId: {}, expireTime: {} ms", lockKey, requestId,
                         expireTime);
                 return true;
@@ -147,15 +153,14 @@ public class RedisDistributeLock extends AbstractLock {
      */
     private boolean unlock(String key) {
         try (Jedis jedis = jedisPool.getResource()) {
+            //通过Lua代码进行原子性的解锁,首先获取锁对应的value值，检查是否与requestId相等，如果相等则删除锁（解锁)
             String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-            Object result = jedis.eval(script, Collections.singletonList(key), Collections.singletonList(requestId));
-
-            if (OK.equals(result)) {
-                log.info("release lock success, current key: {}, requestId: {}", getLockKey(), requestId);
-                return true;
-            }
-            log.info("release lock success, current key: {}, requestId: {}", getLockKey(), requestId);
-            return false;
+            Object evalResult = jedis
+                    .eval(script, Collections.singletonList(key), Collections.singletonList(requestId));
+            boolean result = Objects.equals(UNLOCK_SUCCESS, evalResult == null ? null : String.valueOf(evalResult));
+            log.info("release lock {}, current key: {}, requestId: {}", result ? "success" : "false", getLockKey(),
+                    requestId);
+            return result;
         }
     }
 

@@ -4,7 +4,6 @@ import lombok.Getter;
 
 /**
  * @author YDG
- * @Company qcsz
  * @description
  * @since 2019-03-29
  */

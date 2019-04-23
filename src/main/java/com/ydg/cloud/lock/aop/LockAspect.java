@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author YDG
- * @Company qcsz
  * @description
  * @since 2019-03-29
  */

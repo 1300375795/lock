@@ -11,7 +11,6 @@ import redis.clients.jedis.JedisPoolConfig;
 
 /**
  * @author YDG
- * @Company qcsz
  * @description
  * @since 2019-03-29
  */

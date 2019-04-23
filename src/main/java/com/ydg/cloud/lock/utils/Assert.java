@@ -2,7 +2,6 @@ package com.ydg.cloud.lock.utils;
 
 /**
  * @author YDG
- * @Company qcsz
  * @description
  * @since 2019-03-29
  */

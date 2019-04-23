@@ -65,7 +65,7 @@ public class RedisDistributeLock extends AbstractLock {
     @Override
     public void lock() {
         boolean result = this.lock(maxTryLockTimeOut);
-        Assert.isTrue(result, new LockException("try lock timeout, key: " + getLockKey()));
+        Assert.isTrue(result, new LockException("try lock timeout , key: " + getLockKey()));
     }
 
     @Override
@@ -101,14 +101,16 @@ public class RedisDistributeLock extends AbstractLock {
         String lockKey = getLockKey();
         //如果花费时间小于获取锁最大超时时间,并且没有获取锁成功,不断进行获取锁操作
         while ((System.currentTimeMillis() - start) < tryLockTimeOut && !result) {
-            log.info("try lock, current key: " + lockKey);
             result = this.lock(lockKey, defaultLockTimeOut);
+            log.info("current thread : {}, current key: {} , get lock result : {}", Thread.currentThread().getName(),
+                    lockKey, result);
             //如果获取失败,那么就进行休眠,等待重新获取锁
             if (!result) {
                 try {
                     Thread.sleep(tryLockInterval);
                 } catch (InterruptedException e) {
-                    log.error("try lock thread sleep exception", e);
+                    log.error("current thread : {} , try lock thread sleep exception", Thread.currentThread().getName(),
+                            e);
                     throw new LockException("try lock thread sleep exception");
                 }
             }
@@ -137,8 +139,8 @@ public class RedisDistributeLock extends AbstractLock {
             //redis锁最核心的就是下面的这个操作
             String result = jedis.set(lockKey, requestId, SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, expireTime);
             if (LOCK_SUCCESS.equals(result)) {
-                log.info("lock success, current key: {}, requestId: {}, expireTime: {} ms", lockKey, requestId,
-                        expireTime);
+                log.info("current thread : {} , lock success , current key : {} , requestId : {} , expireTime : {} ms",
+                        Thread.currentThread().getName(), lockKey, requestId, expireTime);
                 return true;
             }
             return false;
@@ -158,8 +160,8 @@ public class RedisDistributeLock extends AbstractLock {
             Object evalResult = jedis
                     .eval(script, Collections.singletonList(key), Collections.singletonList(requestId));
             boolean result = Objects.equals(UNLOCK_SUCCESS, evalResult == null ? null : String.valueOf(evalResult));
-            log.info("release lock {}, current key: {}, requestId: {}", result ? "success" : "false", getLockKey(),
-                    requestId);
+            log.info("current thread : {} , release lock {} , current key: {} , requestId : {}",
+                    Thread.currentThread().getName(), result ? "success" : "false", getLockKey(), requestId);
             return result;
         }
     }

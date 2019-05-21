@@ -1,7 +1,7 @@
 package com.ydg.cloud.lock.annotation;
 
+import com.ydg.cloud.lock.constants.Constant;
 import com.ydg.cloud.lock.enums.LockLevelEnum;
-import com.ydg.cloud.lock.enums.SourceTypeEnum;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -37,9 +37,21 @@ public @interface Lock {
 
     /**
      * 资源类型
+     * <p>
+     * 基于这个资源类型进行拼接key
+     * 每个应用需要自定定义资源类型
+     * 资源类型需要加上应用的前缀
+     * 以防止资源在不同的应用都存在的时候得到一样的key
      *
      * @return
      */
-    SourceTypeEnum lockTypeEnum() default SourceTypeEnum.CUSTOMIZE;
+    String sourceType() default Constant.CUSTOMIZE_SOURCE_TYPE;
+
+    /**
+     * 获取锁最大超时时间,如果设置为0,那么尝试获取锁一次
+     *
+     * @return
+     */
+    long maxTryLockTimeOut() default 10000L;
 
 }

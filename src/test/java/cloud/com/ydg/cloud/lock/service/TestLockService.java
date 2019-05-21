@@ -1,7 +1,7 @@
-package com.ydg.cloud.lock.service;
+package cloud.com.ydg.cloud.lock.service;
 
+import cloud.com.ydg.cloud.lock.dto.TestLockDTO;
 import com.ydg.cloud.lock.annotation.Lock;
-import com.ydg.cloud.lock.dto.TestLockDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TestLockService {
 
-    @Lock(keyName = "id")
+    @Lock(keyName = "testLockDTO.id")
     public void testLock(TestLockDTO testLockDTO, TestLockDTO xxx1, TestLockDTO xxx2, TestLockDTO xxx3, Long id) {
         try {
             Thread.sleep(1000L);

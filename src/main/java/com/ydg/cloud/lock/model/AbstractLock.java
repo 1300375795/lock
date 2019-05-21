@@ -1,6 +1,5 @@
 package com.ydg.cloud.lock.model;
 
-import com.ydg.cloud.lock.enums.SourceTypeEnum;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -24,7 +23,7 @@ public abstract class AbstractLock implements Lock {
     /**
      * 资源类型
      */
-    protected SourceTypeEnum type;
+    protected String sourceType;
 
     /**
      * 默认锁住时间（10s）
@@ -32,9 +31,9 @@ public abstract class AbstractLock implements Lock {
     protected int defaultLockTimeOut = 10000;
 
     /**
-     * 获取锁最大超时时间（毫秒，默认30s）
+     * 获取锁最大超时时间
      */
-    protected long maxTryLockTimeOut = 30000;
+    protected long maxTryLockTimeOut;
 
     /**
      * 每次尝试获取锁的时间间隔（毫秒）

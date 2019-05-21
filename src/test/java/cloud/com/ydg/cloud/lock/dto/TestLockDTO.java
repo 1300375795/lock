@@ -1,4 +1,4 @@
-package com.ydg.cloud.lock.dto;
+package cloud.com.ydg.cloud.lock.dto;
 
 import java.io.Serializable;
 import lombok.Data;
@@ -12,10 +12,13 @@ import lombok.Data;
 public class TestLockDTO implements Serializable {
 
     /**
-     * 主键id
+     * id
      */
     private Long id;
 
+    /**
+     * 名称
+     */
     private String name;
 
 }

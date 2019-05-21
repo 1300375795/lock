@@ -1,19 +1,18 @@
 package com.ydg.cloud.lock.model;
 
-import com.ydg.cloud.lock.enums.SourceTypeEnum;
+import com.ydg.cloud.lock.constants.Constant;
 import com.ydg.cloud.lock.exception.LockException;
-import com.ydg.cloud.lock.utils.Assert;
+import com.ydg.cloud.lock.utils.Validator;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 
 /**
  * @author YDG
@@ -25,31 +24,10 @@ import redis.clients.jedis.JedisPool;
 @Scope("prototype")
 public class RedisDistributeLock extends AbstractLock {
 
-    /**
-     * redis连接池
-     */
     @Autowired
-    private JedisPool jedisPool;
-
-    /**
-     * 加锁操作成功标识
-     */
-    private final static String LOCK_SUCCESS = "OK";
-
-    /**
-     * 释放锁成功的标识
-     */
-    private final static String UNLOCK_SUCCESS = "1";
-
-    /**
-     * 不存在则创建
-     */
-    private static final String SET_IF_NOT_EXIST = "NX";
-
-    /**
-     * 创建key的同时设置它的过期时间
-     */
-    private static final String SET_WITH_EXPIRE_TIME = "PX";
+    private RedisTemplate redisTemplate;
+    @Autowired
+    private DefaultRedisScript<Boolean> redisUnLockScript;
 
     /**
      * 每次生成获取锁的同时，记录请求id（防止分布式，key被其他服务器删除）
@@ -64,7 +42,7 @@ public class RedisDistributeLock extends AbstractLock {
     @Override
     public void lock() {
         boolean result = this.lock(maxTryLockTimeOut);
-        Assert.isTrue(result, new LockException("try lock timeout , key: " + getLockKey()));
+        Validator.isTrue(result, new LockException("try lock timeout , key: " + getLockKey()));
     }
 
     @Override
@@ -81,7 +59,8 @@ public class RedisDistributeLock extends AbstractLock {
             throw new LockException("key must not blank");
         }
         long mills = unit.toMillis(time);
-        Assert.isTrue(mills <= maxTryLockTimeOut, new LockException("try lock timeout longer than maxTryLockTimeOut"));
+        Validator.isTrue(mills <= maxTryLockTimeOut,
+                new LockException("try lock timeout longer than maxTryLockTimeOut"));
         return lock(mills);
     }
 
@@ -93,17 +72,30 @@ public class RedisDistributeLock extends AbstractLock {
         this.unlock(this.getLockKey());
     }
 
+    /**
+     * 在指定的时间内进行进行获取锁操作 阻塞
+     *
+     * @param tryLockTimeOut
+     * @return
+     */
     private boolean lock(long tryLockTimeOut) {
         long start = System.currentTimeMillis();
         requestId = UUID.randomUUID().toString();
         boolean result = false;
         String lockKey = getLockKey();
-        //如果花费时间小于获取锁最大超时时间,并且没有获取锁成功,不断进行获取锁操作
-        while ((System.currentTimeMillis() - start) < tryLockTimeOut && !result) {
+        //如果最大超时时间为0,尝试加锁一次
+        if (maxTryLockTimeOut == 0) {
             result = this.lock(lockKey, defaultLockTimeOut);
             log.info("current thread : {}, current key: {} , get lock result : {}", Thread.currentThread().getName(),
                     lockKey, result);
+            return result;
+        }
+        //如果花费时间小于获取锁最大超时时间,并且没有获取锁成功,不断进行获取锁操作
+        while ((System.currentTimeMillis() - start) < tryLockTimeOut && !result) {
+            result = this.lock(lockKey, defaultLockTimeOut);
             //如果获取失败,那么就进行休眠,等待重新获取锁
+            log.info("current thread : {}, current key: {} , get lock result : {}", Thread.currentThread().getName(),
+                    lockKey, result);
             if (!result) {
                 try {
                     Thread.sleep(tryLockInterval);
@@ -118,10 +110,10 @@ public class RedisDistributeLock extends AbstractLock {
     }
 
     private String getLockKey() {
-        if (type == null) {
-            type = SourceTypeEnum.CUSTOMIZE;
+        if (StringUtils.isBlank(sourceType)) {
+            sourceType = Constant.CUSTOMIZE_SOURCE_TYPE;
         }
-        return PATH + type.getPre() + key;
+        return PATH + sourceType + key;
     }
 
     /**
@@ -134,35 +126,32 @@ public class RedisDistributeLock extends AbstractLock {
      * @return 返回成功还是失败
      */
     private boolean lock(String lockKey, int expireTime) {
-        try (Jedis jedis = jedisPool.getResource()) {
-            //redis锁最核心的就是下面的这个操作
-            String result = jedis.set(lockKey, requestId, SET_IF_NOT_EXIST, SET_WITH_EXPIRE_TIME, expireTime);
-            if (LOCK_SUCCESS.equals(result)) {
-                log.info("current thread : {} , lock success , current key : {} , requestId : {} , expireTime : {} ms",
-                        Thread.currentThread().getName(), lockKey, requestId, expireTime);
-                return true;
-            }
+        Boolean result = redisTemplate.opsForValue().setIfAbsent(lockKey, requestId, expireTime, TimeUnit.MILLISECONDS);
+        if (result == null || !result) {
             return false;
         }
+        log.info("current thread : {} , lock success , current key : {} , requestId : {} , expireTime : {} ms",
+                Thread.currentThread().getName(), lockKey, requestId, expireTime);
+        return true;
     }
 
     /**
      * 释放锁
      *
-     * @param key 资源
+     * @param lockKey 资源key
      * @return 返回成功还是失败
      */
-    private boolean unlock(String key) {
-        try (Jedis jedis = jedisPool.getResource()) {
-            //通过Lua代码进行原子性的解锁,首先获取锁对应的value值，检查是否与requestId相等，如果相等则删除锁（解锁)
-            String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-            Object evalResult = jedis
-                    .eval(script, Collections.singletonList(key), Collections.singletonList(requestId));
-            boolean result = Objects.equals(UNLOCK_SUCCESS, evalResult == null ? null : String.valueOf(evalResult));
-            log.info("current thread : {} , release lock {} , current key: {} , requestId : {}",
-                    Thread.currentThread().getName(), result ? "success" : "false", getLockKey(), requestId);
-            return result;
+    private boolean unlock(String lockKey) {
+        Boolean result = (Boolean) redisTemplate
+                .execute(redisUnLockScript, Collections.singletonList(lockKey), requestId);
+        if (result == null || !result) {
+            log.info("current thread : {} , release lock fail , current key: {} , requestId : {}",
+                    Thread.currentThread().getName(), lockKey, requestId);
+            return false;
         }
+        log.info("current thread : {} , release lock success , current key: {} , requestId : {}",
+                Thread.currentThread().getName(), lockKey, requestId);
+        return true;
     }
 
 }

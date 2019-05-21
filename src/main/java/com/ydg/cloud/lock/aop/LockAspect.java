@@ -2,10 +2,9 @@ package com.ydg.cloud.lock.aop;
 
 import com.ydg.cloud.lock.annotation.Lock;
 import com.ydg.cloud.lock.enums.LockLevelEnum;
-import com.ydg.cloud.lock.enums.SourceTypeEnum;
 import com.ydg.cloud.lock.exception.LockException;
 import com.ydg.cloud.lock.model.AbstractLock;
-import com.ydg.cloud.lock.utils.Assert;
+import com.ydg.cloud.lock.utils.Validator;
 import java.lang.reflect.Field;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -50,13 +49,12 @@ public class LockAspect {
         //锁实现
         LockLevelEnum type = annotation.type();
         //资源类型
-        SourceTypeEnum sourceType = annotation.lockTypeEnum();
+        String sourceType = annotation.sourceType();
 
         AbstractLock lock = context.getBean(type.getClz());
         lock.setKey(key);
-        lock.setType(sourceType);
-        //设置等待超时（10s）
-        lock.setMaxTryLockTimeOut(10000);
+        lock.setSourceType(sourceType);
+        lock.setMaxTryLockTimeOut(annotation.maxTryLockTimeOut());
         lock.lock();
         Object result;
         try {
@@ -77,8 +75,8 @@ public class LockAspect {
      */
     private String getKey(ProceedingJoinPoint joinPoint, String keyName) throws IllegalAccessException {
         Object[] args = joinPoint.getArgs();
-        Assert.isTrue(args != null && args.length > 0, new LockException("annotation Lock method have not params"));
-        Assert.isTrue(StringUtils.isNotBlank(keyName),
+        Validator.isTrue(args != null && args.length > 0, new LockException("annotation Lock method have not params"));
+        Validator.isTrue(StringUtils.isNotBlank(keyName),
                 new LockException("annotation Lock keyName can't be null or empty"));
         //匹配到对应参数
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -98,9 +96,9 @@ public class LockAspect {
                 break;
             }
         }
-        Assert.isTrue(index != -1, new LockException("annotation Lock keyName can not match methodParameter"));
+        Validator.isTrue(index != -1, new LockException("annotation Lock keyName can not match methodParameter"));
         Object arg = args[index];
-        Assert.isTrue(arg != null, new LockException("annotation Lock keyName match methodParameter is null"));
+        Validator.notNull(arg, new LockException("annotation Lock keyName match methodParameter is null"));
         if (pointIndex == -1) {
             //基础类型，直接把值赋给对应参数
             key = arg.toString();
@@ -108,12 +106,13 @@ public class LockAspect {
             //复杂对象类型，赋值到对象的属性当中去
             String fieldName = keyName.substring(pointIndex + 1);
             Field field = getField(arg.getClass(), fieldName);
-            Assert.isTrue(field != null, new LockException("annotation Lock keyName can not match methodParameter"));
+            Validator.isTrue(field != null, new LockException("annotation Lock keyName can not match methodParameter"));
             field.setAccessible(true);
             Object fieldValue = field.get(arg);
+            Validator.notNull(fieldValue, new LockException("annotation Lock keyName match methodParameter is null"));
             key = fieldValue.toString();
         }
-        Assert.isTrue(StringUtils.isNotBlank(key), new LockException("Lock key must be null or empty"));
+        Validator.isTrue(StringUtils.isNotBlank(key), new LockException("Lock key must be null or empty"));
         return key;
     }
 

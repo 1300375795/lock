@@ -13,9 +13,9 @@ import lombok.Getter;
 public enum LockLevelEnum {
 
     /**
-     * java虚拟机级别
+     * 数据库级别
      */
-    JVM("01", "java虚拟机级别", null),
+    DATABASE("01", "数据库级别", null),
 
     /**
      * redis级别

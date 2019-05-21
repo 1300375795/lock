@@ -1,7 +1,7 @@
-package com.ydg.cloud.lock.controller;
+package cloud.com.ydg.cloud.lock.controller;
 
-import com.ydg.cloud.lock.dto.TestLockDTO;
-import com.ydg.cloud.lock.service.TestLockService;
+import cloud.com.ydg.cloud.lock.dto.TestLockDTO;
+import cloud.com.ydg.cloud.lock.service.TestLockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,13 +19,13 @@ public class TestLockController {
     /**
      * 线程数量
      */
-    private static final int THREAD_NUMBER = 10;
+    private static final int THREAD_NUMBER = 20;
 
     @Autowired
     private TestLockService service;
 
     @GetMapping("test")
-    public void testS() {
+    public void test() {
         for (int i = 0; i < THREAD_NUMBER; i++) {
             new Thread(() -> {
                 TestLockDTO testLockDTO = new TestLockDTO();

@@ -1,7 +1,7 @@
-package cloud.com.ydg.cloud.lock.controller;
+package com.ydg.cloud.lock.controller;
 
-import cloud.com.ydg.cloud.lock.dto.TestLockDTO;
-import cloud.com.ydg.cloud.lock.service.TestLockService;
+import com.ydg.cloud.lock.dto.TestLockDTO;
+import com.ydg.cloud.lock.service.TestLockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

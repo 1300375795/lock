@@ -1,6 +1,6 @@
-package cloud.com.ydg.cloud.lock.service;
+package com.ydg.cloud.lock.service;
 
-import cloud.com.ydg.cloud.lock.dto.TestLockDTO;
+import com.ydg.cloud.lock.dto.TestLockDTO;
 import com.ydg.cloud.lock.annotation.Lock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

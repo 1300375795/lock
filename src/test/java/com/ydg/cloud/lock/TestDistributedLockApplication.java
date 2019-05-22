@@ -1,4 +1,4 @@
-package cloud.com.ydg.cloud.lock;
+package com.ydg.cloud.lock;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

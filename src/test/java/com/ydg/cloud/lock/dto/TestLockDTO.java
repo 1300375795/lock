@@ -1,4 +1,4 @@
-package cloud.com.ydg.cloud.lock.dto;
+package com.ydg.cloud.lock.dto;
 
 import java.io.Serializable;
 import lombok.Data;

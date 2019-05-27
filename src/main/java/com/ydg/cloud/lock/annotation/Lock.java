@@ -48,7 +48,7 @@ public @interface Lock {
     String sourceType() default Constant.CUSTOMIZE_SOURCE_TYPE;
 
     /**
-     * 获取锁最大超时时间,如果设置为0,那么尝试获取锁一次
+     * 最大尝试获取锁时间--毫秒
      *
      * @return
      */

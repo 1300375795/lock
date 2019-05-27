@@ -83,13 +83,6 @@ public class RedisDistributeLock extends AbstractLock {
         requestId = UUID.randomUUID().toString();
         boolean result = false;
         String lockKey = getLockKey();
-        //如果最大超时时间为0,尝试加锁一次
-        if (maxTryLockTimeOut == 0) {
-            result = this.lock(lockKey, defaultLockTimeOut);
-            log.info("current thread : {}, current key: {} , get lock result : {}", Thread.currentThread().getName(),
-                    lockKey, result);
-            return result;
-        }
         //如果花费时间小于获取锁最大超时时间,并且没有获取锁成功,不断进行获取锁操作
         while ((System.currentTimeMillis() - start) < tryLockTimeOut && !result) {
             result = this.lock(lockKey, defaultLockTimeOut);

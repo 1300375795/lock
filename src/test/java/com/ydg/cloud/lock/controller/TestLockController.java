@@ -2,6 +2,7 @@ package com.ydg.cloud.lock.controller;
 
 import com.ydg.cloud.lock.dto.TestLockDTO;
 import com.ydg.cloud.lock.service.TestLockService;
+import com.ydg.cloud.lock.service.TestService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,8 @@ public class TestLockController {
 
     @Autowired
     private TestLockService service;
+    @Autowired
+    private TestService testService;
 
     @GetMapping("test")
     public void test() {
@@ -37,5 +40,7 @@ public class TestLockController {
                 service.testLock(testLockDTO, xxx1, xxx2, xxx3, 1L);
             }).start();
         }
+
+        testService.testLock(1L);
     }
 }

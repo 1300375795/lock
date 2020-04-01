@@ -3,7 +3,7 @@ package com.ydg.cloud.lock.aop;
 import com.ydg.cloud.lock.annotation.Lock;
 import com.ydg.cloud.lock.enums.LockLevelEnum;
 import com.ydg.cloud.lock.exception.LockException;
-import com.ydg.cloud.lock.model.AbstractLock;
+import com.ydg.cloud.lock.lock.AbstractLock;
 import com.ydg.cloud.lock.utils.Validator;
 import java.lang.reflect.Field;
 import lombok.extern.slf4j.Slf4j;

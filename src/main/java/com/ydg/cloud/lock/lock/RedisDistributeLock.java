@@ -1,4 +1,4 @@
-package com.ydg.cloud.lock.model;
+package com.ydg.cloud.lock.lock;
 
 import com.ydg.cloud.lock.constants.Constant;
 import com.ydg.cloud.lock.exception.LockException;

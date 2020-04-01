@@ -1,4 +1,4 @@
-package com.ydg.cloud.lock.model;
+package com.ydg.cloud.lock.lock;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;

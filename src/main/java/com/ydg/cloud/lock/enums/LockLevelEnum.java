@@ -1,7 +1,7 @@
 package com.ydg.cloud.lock.enums;
 
-import com.ydg.cloud.lock.model.AbstractLock;
-import com.ydg.cloud.lock.model.RedisDistributeLock;
+import com.ydg.cloud.lock.lock.AbstractLock;
+import com.ydg.cloud.lock.lock.RedisDistributeLock;
 import lombok.Getter;
 
 /**
